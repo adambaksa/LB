@@ -86,8 +86,8 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
   }
 
 provisioner "file" {
-    source      = "scripts/IIS_Config.ps1"
-    destination = "C:/IIS_Config.ps1"
+    source      = "scripts/sap-html/"
+    destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface1.private_ip_address
     type     = "winrm"
@@ -96,7 +96,7 @@ connection {
     }
   }
 
-provisioner "remote-exec" {
+/*provisioner "remote-exec" {
     inline = [
     "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface1.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
     "PowerShell.exe -NonInteractive -ExecutionPolicy Unrestricted -File \"C:/IIS_Config.ps1\""
@@ -108,7 +108,7 @@ connection {
     password = var.admin_password
      }
    } 
-
+*/
 
   depends_on = [
     azurerm_network_interface.app_interface1,
@@ -141,8 +141,8 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
   }
 
 provisioner "file" {
-    source      = "scripts/IIS_Config.ps1"
-    destination = "C:/IIS_Config.ps1"
+    source      = "scripts/sap-html/"
+    destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface2.private_ip_address
     type     = "winrm"
@@ -150,7 +150,7 @@ connection {
     password = var.admin_password
     }
   }
-
+/*
 provisioner "remote-exec" {
     inline = [
     "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface2.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
@@ -163,7 +163,7 @@ connection {
     password = var.admin_password
      }
    } 
-
+*/
   depends_on = [
     azurerm_network_interface.app_interface2,
     azurerm_availability_set.app_set
@@ -181,7 +181,7 @@ resource "azurerm_availability_set" "app_set" {
     azurerm_resource_group.app_grp
   ]
 }
-/*
+
 resource "azurerm_storage_account" "app_store" {
   name                     = var.storage_account_name
   resource_group_name      = azurerm_resource_group.app_grp.name
@@ -242,7 +242,7 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
     }
 SETTINGS
 }
-*/
+
 resource "azurerm_network_security_group" "app_nsg" {
   name                = "app-nsg"
   location            = azurerm_resource_group.app_grp.location
