@@ -1,0 +1,5 @@
+location                = "North Europe"
+resource_group_name     = "appgrp"
+admin_username          = "fleq8s"
+admin_password          = "Azure@123"
+storage_account_name    = "appstore20240408"
