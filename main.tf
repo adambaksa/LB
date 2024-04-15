@@ -85,6 +85,18 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
     version   = "latest"
   }
 
+provisioner "file" {
+    source      = "scripts/IIS_Config.ps1"
+    destination = "C:/IIS_Config.ps1"
+connection {
+    host     = azurerm_windows_virtual_machine.app_vm1.private_ip_address
+    type     = "winrm"
+    user     = var.admin_username
+    password = var.admin_password
+    }
+  }
+
+
   depends_on = [
     azurerm_network_interface.app_interface1,
     azurerm_availability_set.app_set
