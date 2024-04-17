@@ -86,7 +86,7 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
   }
 /*
 provisioner "file" {
-    source      = "scripts/sap-html/"
+    source      = "scripts/scripts/"
     destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface1.private_ip_address
@@ -144,7 +144,7 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
   }
 /*
 provisioner "file" {
-    source      = "scripts/sap-html/"
+    source      = "scripts/scripts/"
     destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface2.private_ip_address
@@ -205,7 +205,7 @@ resource "azurerm_storage_container" "data" {
     azurerm_storage_account.app_store
     ]
 }
-
+/*
 resource "azurerm_storage_blob" "IIS_config" {
   name                   = var.blob_name
   storage_account_name   = var.storage_account_name
@@ -214,16 +214,16 @@ resource "azurerm_storage_blob" "IIS_config" {
   source                 = "scripts/IIS_Config.ps1"
    depends_on=[azurerm_storage_container.data]
 }
-
-resource "azurerm_storage_blob" "sap_html" {
-  name                   = "sap-html.zip"
+*/
+resource "azurerm_storage_blob" "scripts_a" {
+  name                   = "scripts.zip"
   storage_account_name   = var.storage_account_name
   storage_container_name = var.container_name
   type                   = "Block"
-  source                 = "scripts/sap-html.zip"
+  source                 = "scripts/scripts.zip"
    depends_on=[azurerm_storage_container.data]
 }
-
+/*
 resource "azurerm_virtual_machine_extension" "vm_extension1" {
   name                 = "appvm-extension01"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
@@ -257,37 +257,37 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
     }
 SETTINGS
 }
-
-resource "azurerm_virtual_machine_extension" "vm_extension3" {
-  name                 = "appvm-extension03"
+*/
+resource "azurerm_virtual_machine_extension" "vm_extension1" {
+  name                 = "appvm-extension01"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
   depends_on = [
-    azurerm_storage_blob.sap_html
+    azurerm_storage_blob.scripts_a
   ]
   settings = <<SETTINGS
     {
-        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip -OutFile C:\\sap-html.zip; Expand-Archive -Path C:\\sap-html.zip -DestinationPath C:\\inetpub\\wwwroot\\sap-html; Remove-Item -Path C:\\sap-html.zip\""
+        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip"],
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; .\\C:\\inetpub\\wwwroot\\scripts\\IIS_Config.ps1\""
     }
 SETTINGS
 }
 
-resource "azurerm_virtual_machine_extension" "vm_extension4" {
-  name                 = "appvm-extension04"
+resource "azurerm_virtual_machine_extension" "vm_extension2" {
+  name                 = "appvm-extension02"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
   depends_on = [
-    azurerm_storage_blob.sap_html
+    azurerm_storage_blob.scripts_a
   ]
   settings = <<SETTINGS
     {
-        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip -OutFile C:\\sap-html.zip; Expand-Archive -Path C:\\sap-html.zip -DestinationPath C:\\inetpub\\wwwroot\\sap-html; Remove-Item -Path C:\\sap-html.zip\""
+        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip"],
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; .\\C:\\inetpub\\wwwroot\\scripts\\IIS_Config.ps1\""
     }
 SETTINGS
 }
