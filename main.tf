@@ -84,19 +84,22 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
     sku       = "2019-Datacenter"
     version   = "latest"
   }
-
+/*
 provisioner "file" {
     source      = "scripts/sap-html/"
     destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface1.private_ip_address
+ #   host     = azurerm_windows_virtual_machine.app_vm1.private_ip_address
     type     = "winrm"
     user     = var.admin_username
     password = var.admin_password
+    port     = "5985"
+    timeout  = "12m"
     }
   }
 
-/*provisioner "remote-exec" {
+provisioner "remote-exec" {
     inline = [
     "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface1.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
     "PowerShell.exe -NonInteractive -ExecutionPolicy Unrestricted -File \"C:/IIS_Config.ps1\""
@@ -139,18 +142,21 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
     sku       = "2019-Datacenter"
     version   = "latest"
   }
-
+/*
 provisioner "file" {
     source      = "scripts/sap-html/"
     destination = "C:/inetpub/wwwroot/"
 connection {
     host     = azurerm_network_interface.app_interface2.private_ip_address
+#    host     = azurerm_windows_virtual_machine.app_vm2.private_ip_address
     type     = "winrm"
     user     = var.admin_username
     password = var.admin_password
+    port     = "5985"
+    timeout  = "12m"
     }
   }
-/*
+
 provisioner "remote-exec" {
     inline = [
     "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface2.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
@@ -205,7 +211,16 @@ resource "azurerm_storage_blob" "IIS_config" {
   storage_account_name   = var.storage_account_name
   storage_container_name = var.container_name
   type                   = "Block"
-  source                 = var.blob_name
+  source                 = "scripts/IIS_Config.ps1"
+   depends_on=[azurerm_storage_container.data]
+}
+
+resource "azurerm_storage_blob" "sap_html" {
+  name                   = "sap-html.zip"
+  storage_account_name   = var.storage_account_name
+  storage_container_name = var.container_name
+  type                   = "Block"
+  source                 = "scripts/sap-html.zip"
    depends_on=[azurerm_storage_container.data]
 }
 
@@ -243,6 +258,40 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
 SETTINGS
 }
 
+resource "azurerm_virtual_machine_extension" "vm_extension3" {
+  name                 = "appvm-extension"
+  virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+  depends_on = [
+    azurerm_storage_blob.sap_html
+  ]
+  settings = <<SETTINGS
+    {
+        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip"],
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip -OutFile C:\\sap-html.zip; Expand-Archive -Path C:\\sap-html.zip -DestinationPath C:\\inetpub\\wwwroot\\sap-html; Remove-Item -Path C:\\sap-html.zip\""
+    }
+SETTINGS
+}
+
+resource "azurerm_virtual_machine_extension" "vm_extension4" {
+  name                 = "appvm-extension"
+  virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+  depends_on = [
+    azurerm_storage_blob.sap_html
+  ]
+  settings = <<SETTINGS
+    {
+        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip"],
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/sap-html.zip -OutFile C:\\sap-html.zip; Expand-Archive -Path C:\\sap-html.zip -DestinationPath C:\\inetpub\\wwwroot\\sap-html; Remove-Item -Path C:\\sap-html.zip\""
+    }
+SETTINGS
+}
+
 resource "azurerm_network_security_group" "app_nsg" {
   name                = "app-nsg"
   location            = azurerm_resource_group.app_grp.location
@@ -259,7 +308,7 @@ resource "azurerm_network_security_group" "app_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
+/*
   security_rule {
     name                       = "Allow_WinRM_HTTP"
     priority                   = 300
@@ -271,7 +320,7 @@ resource "azurerm_network_security_group" "app_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  
+  */
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_association" {
