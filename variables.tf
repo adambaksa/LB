@@ -47,12 +47,13 @@ variable "container_name" {
   default     = "data"
 }
 
+/*
 variable "blob_name" {
   type        = string
   description = "The name of the blob."
   default     = "IIS_Config.ps1"
 }
-
+*/
 /*variable "source_image" {
   type = object({
     publisher = string
