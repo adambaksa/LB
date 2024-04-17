@@ -84,34 +84,6 @@ resource "azurerm_windows_virtual_machine" "app_vm1" {
     sku       = "2019-Datacenter"
     version   = "latest"
   }
-/*
-provisioner "file" {
-    source      = "scripts/scripts/"
-    destination = "C:/inetpub/wwwroot/"
-connection {
-    host     = azurerm_network_interface.app_interface1.private_ip_address
- #   host     = azurerm_windows_virtual_machine.app_vm1.private_ip_address
-    type     = "winrm"
-    user     = var.admin_username
-    password = var.admin_password
-    port     = "5985"
-    timeout  = "12m"
-    }
-  }
-
-provisioner "remote-exec" {
-    inline = [
-    "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface1.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
-    "PowerShell.exe -NonInteractive -ExecutionPolicy Unrestricted -File \"C:/IIS_Config.ps1\""
-  ]
-connection {
-    host     = azurerm_network_interface.app_interface1.private_ip_address
-    type     = "winrm"
-    user     = var.admin_username
-    password = var.admin_password
-     }
-   } 
-*/
 
   depends_on = [
     azurerm_network_interface.app_interface1,
@@ -142,34 +114,7 @@ resource "azurerm_windows_virtual_machine" "app_vm2" {
     sku       = "2019-Datacenter"
     version   = "latest"
   }
-/*
-provisioner "file" {
-    source      = "scripts/scripts/"
-    destination = "C:/inetpub/wwwroot/"
-connection {
-    host     = azurerm_network_interface.app_interface2.private_ip_address
-#    host     = azurerm_windows_virtual_machine.app_vm2.private_ip_address
-    type     = "winrm"
-    user     = var.admin_username
-    password = var.admin_password
-    port     = "5985"
-    timeout  = "12m"
-    }
-  }
 
-provisioner "remote-exec" {
-    inline = [
-    "while (!(Test-Connection -ComputerName ${azurerm_network_interface.app_interface2.private_ip_address} -Port 5985 -Quiet)) { Start-Sleep 10 }",
-    "PowerShell.exe -NonInteractive -ExecutionPolicy Unrestricted -File \"C:/IIS_Config.ps1\""
-  ]
-connection {
-    host     = azurerm_network_interface.app_interface2.private_ip_address
-    type     = "winrm"
-    user     = var.admin_username
-    password = var.admin_password
-     }
-   } 
-*/
   depends_on = [
     azurerm_network_interface.app_interface2,
     azurerm_availability_set.app_set
@@ -205,16 +150,7 @@ resource "azurerm_storage_container" "data" {
     azurerm_storage_account.app_store
     ]
 }
-/*
-resource "azurerm_storage_blob" "IIS_config" {
-  name                   = var.blob_name
-  storage_account_name   = var.storage_account_name
-  storage_container_name = var.container_name
-  type                   = "Block"
-  source                 = "scripts/IIS_Config.ps1"
-   depends_on=[azurerm_storage_container.data]
-}
-*/
+
 resource "azurerm_storage_blob" "scripts_a" {
   name                   = "scripts.zip"
   storage_account_name   = var.storage_account_name
@@ -223,41 +159,7 @@ resource "azurerm_storage_blob" "scripts_a" {
   source                 = "scripts/scripts.zip"
    depends_on=[azurerm_storage_container.data]
 }
-/*
-resource "azurerm_virtual_machine_extension" "vm_extension1" {
-  name                 = "appvm-extension01"
-  virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-  depends_on = [
-    azurerm_storage_blob.IIS_config
-  ]
-  settings = <<SETTINGS
-    {
-        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/IIS_Config.ps1"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file IIS_Config.ps1"     
-    }
-SETTINGS
-}
 
-resource "azurerm_virtual_machine_extension" "vm_extension2" {
-  name                 = "appvm-extension02"
-  virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-  depends_on = [
-    azurerm_storage_blob.IIS_config
-  ]
-  settings = <<SETTINGS
-    {
-        "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/IIS_Config.ps1"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file IIS_Config.ps1"     
-    }
-SETTINGS
-}
-*/
 resource "azurerm_virtual_machine_extension" "vm_extension1" {
   name                 = "appvm-extension01"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
@@ -270,7 +172,8 @@ resource "azurerm_virtual_machine_extension" "vm_extension1" {
   settings = <<SETTINGS
     {
         "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; .\\C:\\inetpub\\wwwroot\\scripts\\IIS_Config.ps1\""
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; & 'C:\\inetpub\\wwwroot\\scripts\\scripts\\IIS_Config.ps1'\""
+
     }
 SETTINGS
 }
@@ -287,7 +190,7 @@ resource "azurerm_virtual_machine_extension" "vm_extension2" {
   settings = <<SETTINGS
     {
         "fileUris": ["https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip"],
-          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; .\\C:\\inetpub\\wwwroot\\scripts\\IIS_Config.ps1\""
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"Invoke-WebRequest -Uri https://${azurerm_storage_account.app_store.name}.blob.core.windows.net/data/scripts.zip -OutFile C:\\scripts.zip; Expand-Archive -Path C:\\scripts.zip -DestinationPath C:\\inetpub\\wwwroot\\scripts; Remove-Item -Path C:\\scripts.zip; & 'C:\\inetpub\\wwwroot\\scripts\\scripts\\IIS_Config.ps1'\""
     }
 SETTINGS
 }
@@ -308,19 +211,6 @@ resource "azurerm_network_security_group" "app_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-/*
-  security_rule {
-    name                       = "Allow_WinRM_HTTP"
-    priority                   = 300
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "5985"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-  */
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg_association" {
