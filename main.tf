@@ -225,7 +225,7 @@ resource "azurerm_storage_blob" "sap_html" {
 }
 
 resource "azurerm_virtual_machine_extension" "vm_extension1" {
-  name                 = "appvm-extension"
+  name                 = "appvm-extension01"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -242,7 +242,7 @@ SETTINGS
 }
 
 resource "azurerm_virtual_machine_extension" "vm_extension2" {
-  name                 = "appvm-extension"
+  name                 = "appvm-extension02"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -259,7 +259,7 @@ SETTINGS
 }
 
 resource "azurerm_virtual_machine_extension" "vm_extension3" {
-  name                 = "appvm-extension"
+  name                 = "appvm-extension03"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm1.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -276,7 +276,7 @@ SETTINGS
 }
 
 resource "azurerm_virtual_machine_extension" "vm_extension4" {
-  name                 = "appvm-extension"
+  name                 = "appvm-extension04"
   virtual_machine_id   = azurerm_windows_virtual_machine.app_vm2.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
