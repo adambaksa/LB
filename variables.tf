@@ -46,27 +46,3 @@ variable "container_name" {
   description = "The name of the storage container."
   default     = "data"
 }
-
-/*
-variable "blob_name" {
-  type        = string
-  description = "The name of the blob."
-  default     = "IIS_Config.ps1"
-}
-*/
-/*variable "source_image" {
-  type = object({
-    publisher = string
-    offer     = string
-    sku       = string
-    version   = string
-  })
-  description = "The source image for the Virtual Machine."
-  default = {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2019-Datacenter"
-    version   = "latest"
-  }
-}
-*/
