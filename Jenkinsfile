@@ -46,8 +46,8 @@ pipeline {
     }
 
     post {
-        always {
-            // Cleanup actions after the pipeline runs, successful or not
+    always {
+        node {
             script {
                 sh 'rm -f terraform.tfplan'
             }
