@@ -1,7 +1,11 @@
 pipeline {
-    agent any // This will allow the pipeline to run on any available agent
+    agent any
 
-    // Define environment variables for Azure credentials
+    parameters {
+        booleanParam(name: 'autoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
+        choice(name: 'action', choices: ['apply', 'destroy'], description: 'Select the action to perform')
+    }
+
     environment {
         ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
         ARM_CLIENT_ID = credentials('azure-client-id')
@@ -10,48 +14,41 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                // Checkout from a Git repository; credentials may be needed if it's private
-                git(url: 'https://github.com/adambaksa/LB.git', credentialsId: '9e6fe432-19e5-420c-8e6f-f2c02d8c7914')
+                git branch: 'main', url: 'https://github.com/adambaksa/LB.git'
             }
         }
-
-        stage('Terraform Init') {
+        stage('Terraform init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+        stage('Plan') {
+            steps {
+                sh 'terraform plan -out tfplan'
+                sh 'terraform show -no-color tfplan > tfplan.txt'
+            }
+        }
+        stage('Apply / Destroy') {
             steps {
                 script {
-                    // Initializing Terraform; ensure Terraform is installed on the Jenkins agent
-                    sh 'terraform init'
+                    if (params.action == 'apply') {
+                        if (!params.autoApprove) {
+                            def plan = readFile 'tfplan.txt'
+                            input message: "Do you want to apply the plan?",
+                            parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
+                        }
+
+                        sh 'terraform ${action} -input=false tfplan'
+                    } else if (params.action == 'destroy') {
+                        sh 'terraform ${action} --auto-approve'
+                    } else {
+                        error "Invalid action selected. Please choose either 'apply' or 'destroy'."
+                    }
                 }
             }
         }
 
-        stage('Terraform Plan') {
-            steps {
-                script {
-                    // Running Terraform plan to create an execution plan
-                    sh 'terraform plan -out=terraform.tfplan'
-                }
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                script {
-                    // Applying the Terraform plan
-                    sh 'terraform apply -auto-approve terraform.tfplan'
-                }
-            }
-        }
-    }
-
-    post {
-    always {
-        node {
-            script {
-                sh 'rm -f terraform.tfplan'
-            }
-            echo 'Pipeline execution is complete.'
-        }
     }
 }
