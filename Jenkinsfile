@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    tools {
-        terraform 'Terraform v1.7.3' // Use the name/version you configured
-    }
     parameters {
         booleanParam(name: 'autoApprove', defaultValue: false, description: 'Automatically run apply after generating plan?')
         choice(name: 'action', choices: ['apply', 'destroy'], description: 'Select the action to perform')
@@ -14,7 +11,9 @@ pipeline {
         ARM_CLIENT_SECRET = credentials('azure-client-secret')
         ARM_TENANT_ID = credentials('azure-tenant-id')
     }
-
+    tools {
+        terraform 'Terraform v1.7.3' // Use the name/version you configured
+    }
     stages {
         stage('Checkout') {
             steps {
