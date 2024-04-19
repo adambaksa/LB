@@ -11,9 +11,7 @@ pipeline {
         ARM_CLIENT_SECRET = credentials('azure-client-secret')
         ARM_TENANT_ID = credentials('azure-tenant-id')
     }
-    tools {
-        terraform 'Terraform v1.7.3' // Use the name/version you configured
-    }
+    
     stages {
         stage('Checkout') {
             steps {
