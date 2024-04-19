@@ -24,15 +24,19 @@ pipeline {
         stage('Terraform init') {
             steps {
                 dir('../LB') { // Specify your directory path here
-                    sh 'terraform init'
+                    script {
+                        sh 'export PATH=$PATH:/opt/homebrew/bin/terraform & terraform init'
+                        }
                 }
             }
         }
         stage('Plan') {
             steps {
                 dir('../LB') { // Specify your directory path here
-                    sh 'terraform plan -out tfplan'
-                    sh 'terraform show -no-color tfplan > tfplan.txt'
+                    script {
+                        sh 'export PATH=$PATH:/opt/homebrew/bin/terraform & terraform plan -out tfplan'
+                        sh 'export PATH=$PATH:/opt/homebrew/bin/terraform & terraform show -no-color tfplan > tfplan.txt'
+                        }
                 }
             }
         }
@@ -47,9 +51,9 @@ pipeline {
                                 parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
                             }
 
-                            sh 'terraform ${action} -input=false tfplan'
+                            sh 'export PATH=$PATH:/opt/homebrew/bin/terraform & terraform ${action} -input=false tfplan'
                         } else if (params.action == 'destroy') {
-                            sh 'terraform ${action} --auto-approve'
+                            sh 'export PATH=$PATH:/opt/homebrew/bin/terraform & terraform ${action} --auto-approve'
                         } else {
                             error "Invalid action selected. Please choose either 'apply' or 'destroy'."
                         }
