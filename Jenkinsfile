@@ -29,6 +29,14 @@ pipeline {
                 }
             }
         }
+        stage('Debug') {
+            steps {
+                script {
+                    sh 'echo $PATH'
+                    sh 'which terraform'
+                    }
+                }
+        }
         stage('Plan') {
             steps {
                 dir('../LB') { // Specify your directory path here
