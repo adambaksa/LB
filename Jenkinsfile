@@ -15,45 +15,48 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                dir('../LB') { // Specify your directory path here
+                dir('../LB') {
                     git branch: 'main', url: 'https://github.com/adambaksa/LB.git'
                 }
             }
         }
         stage('Terraform init') {
             steps {
-                dir('../LB') { // Specify your directory path here
+                dir('../LB') {
                     script {
-                        sh 'terraform init'
-                        }
+                        bat 'terraform init'
+                    }
                 }
             }
         }
         
         stage('Plan') {
             steps {
-                dir('../LB') { // Specify your directory path here
+                dir('../LB') {
                     script {
-                        sh 'terraform plan -out tfplan'
-                        sh 'terraform show -no-color tfplan > tfplan.txt'
-                        }
+                        bat 'terraform plan -out main.tfplan'
+                        bat 'terraform show -no-color main.tfplan > tfplan.txt'
+                    }
                 }
             }
         }
         stage('Apply / Destroy') {
             steps {
-                dir('../LB') { // Specify your directory path here
+                dir('../LB') {
                     script {
+                        // Here we ensure we're using Groovy string interpolation to construct the command
+                        def terraformCommand = "terraform ${params.action} -input=false main.tfplan"
                         if (params.action == 'apply') {
                             if (!params.autoApprove) {
                                 def plan = readFile 'tfplan.txt'
                                 input message: "Do you want to apply the plan?",
                                 parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
                             }
-
-                            sh 'terraform ${action} -input=false tfplan'
+                            // Using Groovy string interpolation to pass the correct command to bat
+                            bat terraformCommand
                         } else if (params.action == 'destroy') {
-                            sh 'terraform ${action} --auto-approve'
+                            // Same approach here for the destroy action
+                            bat "terraform ${params.action} --auto-approve"
                         } else {
                             error "Invalid action selected. Please choose either 'apply' or 'destroy'."
                         }
